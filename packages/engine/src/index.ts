@@ -1,5 +1,7 @@
 import { observationKey, type Observation, type PlatformDefinition, type PromptDefinition } from "@ai-visibility/domain";
 
+export * from "./run-initializer.js";
+
 export interface PlannedObservation {
   prompt: PromptDefinition;
   platform: PlatformDefinition;
