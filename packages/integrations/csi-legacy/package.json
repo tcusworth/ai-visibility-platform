@@ -11,9 +11,11 @@
     "validate:classification": "tsx src/validate-classification.ts",
     "validate:prompt": "tsx src/validate-prompt.ts",
     "validate:pipeline": "tsx src/validate-pipeline.ts",
-    "validate:live-scorer": "tsx src/validate-live-scorer.ts"
+    "validate:live-scorer": "tsx src/validate-live-scorer.ts",
+    "validate:atomic-persistence": "tsx src/validate-atomic-persistence.ts"
   },
   "dependencies": {
+    "@ai-visibility/database": "0.1.0",
     "@ai-visibility/domain": "0.1.0",
     "@ai-visibility/providers": "0.1.0",
     "@ai-visibility/scoring": "0.1.0",
