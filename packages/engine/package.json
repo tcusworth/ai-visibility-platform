@@ -12,12 +12,14 @@
     "fake:persist": "tsx src/fake-persist-cli.ts",
     "fake:retry": "tsx src/fake-retry-cli.ts",
     "fake:attempt-history": "tsx src/fake-attempt-history-cli.ts",
+    "fake:score": "tsx src/fake-score-cli.ts",
     "run:reconcile": "tsx src/reconcile-run-cli.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
     "@ai-visibility/domain": "0.1.0",
-    "@ai-visibility/providers": "0.1.0"
+    "@ai-visibility/providers": "0.1.0",
+    "@ai-visibility/scoring": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
