@@ -69,4 +69,5 @@ export function applyScoringResult(observation: Observation, result: ScoringResu
 
 export * from "./classification.js";
 export * from "./methodology.js";
+export * from "./prompt.js";
 export * from "./snapshots.js";
