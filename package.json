@@ -11,7 +11,13 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d postgres",
+    "db:down": "docker compose -f docker-compose.dev.yml down",
+    "db:reset": "docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml up -d postgres",
+    "db:logs": "docker compose -f docker-compose.dev.yml logs -f postgres",
+    "db:migrate": "npm run migrate --workspace=@ai-visibility/database",
+    "db:healthcheck": "npm run healthcheck --workspace=@ai-visibility/database"
   },
   "engines": {
     "node": ">=22"
