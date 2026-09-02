@@ -35,8 +35,16 @@ const prompt: PromptDefinition = {
   active: true,
 };
 
+const displayNames: Record<(typeof platforms)[number], string> = {
+  openai: "OpenAI",
+  gemini: "Gemini",
+  perplexity: "Perplexity",
+  claude: "Claude",
+};
+
 const platformDefinitions: PlatformDefinition[] = platforms.map((key) => ({
   key,
+  displayName: displayNames[key],
   model: `fixture-${key}`,
   enabled: true,
 }));
