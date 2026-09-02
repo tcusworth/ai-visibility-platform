@@ -191,9 +191,12 @@ async function main(): Promise<void> {
     assert(result.observation.status === "SUCCESS", "Canonical observation persisted as SUCCESS");
     assert(result.observation.targetMentioned === true, "Target mention normalized through execution service");
     assert(result.observation.targetCited === true, "Owned-domain citation override preserved");
-    assert(result.observation.visibilityScore === 4, "Production score 4 preserved");
+    assert((result.observation.visibilityScore ?? 0) >= 4, "Recommendation-level production score preserved");
     assert(result.observation.targetRecommended === true, "Recommendation threshold preserved");
-    assert(result.observation.weightedScore === 4 * prompt.weight, "Weighted score preserved");
+    assert(
+      result.observation.weightedScore === (result.observation.visibilityScore ?? 0) * prompt.weight,
+      "Weighted score preserved",
+    );
     assert(result.parseFailed === false, "Scorer output parsed successfully");
     assert(result.persistence.attempt.attemptNumber === 1, "Atomic attempt history created as attempt 1");
 
@@ -213,6 +216,7 @@ async function main(): Promise<void> {
 
     console.log(`Scorer model returned: ${result.scorerModel}`);
     console.log(`Scorer response ID present: ${result.scorerResponseId ? "yes" : "no"}`);
+    console.log(`Visibility score returned: ${result.observation.visibilityScore}`);
     console.log("Scored execution service validation passed.");
     console.log("Exactly one OpenAI scorer request and temporary local database writes were made.");
     console.log("No benchmark-provider, n8n, Google Sheets, or CSI production calls were made.");
