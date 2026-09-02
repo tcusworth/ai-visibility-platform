@@ -6,7 +6,8 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "init:run": "tsx src/init-run-cli.ts"
+    "init:run": "tsx src/init-run-cli.ts",
+    "plan:run": "tsx src/plan-run-cli.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
