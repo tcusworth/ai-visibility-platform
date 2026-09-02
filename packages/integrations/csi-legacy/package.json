@@ -15,7 +15,8 @@
     "validate:atomic-persistence": "tsx src/validate-atomic-persistence.ts",
     "validate:scored-execution": "tsx src/validate-scored-execution.ts",
     "validate:scored-execution-failure": "tsx src/validate-scored-execution-failure.ts",
-    "validate:provider-failure": "tsx src/validate-provider-failure.ts"
+    "validate:provider-failure": "tsx src/validate-provider-failure.ts",
+    "validate:live-openai-provider": "tsx src/validate-live-openai-provider.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
