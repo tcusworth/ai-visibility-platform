@@ -7,7 +7,7 @@ import {
   type HttpJsonClient,
   type HttpJsonResponse,
 } from "@ai-visibility/providers";
-import type { PlatformKey, PromptDefinition, TargetEntity } from "@ai-visibility/domain";
+import type { PromptDefinition, TargetEntity } from "@ai-visibility/domain";
 import type { VisibilityScorerPromptProfile } from "@ai-visibility/scoring";
 import { createCsiProviderRegistry, CSI_PROVIDER_MODELS } from "./csi-provider-registry.js";
 
@@ -179,7 +179,7 @@ async function main(): Promise<void> {
       httpClient,
     });
     const store = new PostgresObservationExecutionStore(pool);
-    const platforms: PlatformKey[] = ["openai", "gemini", "perplexity", "claude"];
+    const platforms = ["openai", "gemini", "perplexity", "claude"] as const;
 
     console.log(`Prompt external ID: ${prompt.externalPromptId}`);
     console.log(`OpenAI model: ${CSI_PROVIDER_MODELS.openai}`);
