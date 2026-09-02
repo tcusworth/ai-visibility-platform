@@ -68,3 +68,4 @@ export function applyScoringResult(observation: Observation, result: ScoringResu
 }
 
 export * from "./methodology.js";
+export * from "./snapshots.js";
