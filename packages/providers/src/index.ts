@@ -56,3 +56,4 @@ export * from "./openai-scorer.js";
 export * from "./openai-provider.js";
 export * from "./gemini-provider.js";
 export * from "./perplexity-provider.js";
+export * from "./claude-provider.js";
