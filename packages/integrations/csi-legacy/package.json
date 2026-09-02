@@ -6,9 +6,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "import:prompts": "tsx src/import-prompts.ts",
-    "validate:methodology": "tsx src/validate-methodology.ts"
+    "validate:methodology": "tsx src/validate-methodology.ts",
+    "validate:snapshots": "tsx src/validate-snapshots.ts"
   },
   "dependencies": {
+    "@ai-visibility/domain": "0.1.0",
     "@ai-visibility/scoring": "0.1.0",
     "pg": "^8.13.1"
   },
