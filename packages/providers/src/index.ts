@@ -1,4 +1,4 @@
-import type { PlatformKey } from "@ai-visibility/domain";
+import type { PlatformKey, SourceReference } from "@ai-visibility/domain";
 
 export interface ProviderRequest {
   platform: PlatformKey;
@@ -10,6 +10,7 @@ export interface ProviderResponse {
   answer: string;
   model: string;
   rawProviderId?: string;
+  sources?: SourceReference[];
 }
 
 export interface ModelProvider {
@@ -52,3 +53,4 @@ export class ProviderRegistry {
 }
 
 export * from "./openai-scorer.js";
+export * from "./openai-provider.js";
