@@ -4,22 +4,7 @@ The platform persistence layer uses PostgreSQL. Google Sheets remains an import/
 
 ## Initial schema
 
-Migration `migrations/001_initial_schema.sql` creates:
-
-- workspaces
-- target entities, aliases, and owned domains
-- competitor entities, aliases, and domains
-- versioned prompt sets and prompts
-- versioned scoring and authority profiles
-- benchmark definitions and benchmark platforms
-- benchmark runs
-- logical observations
-- observation attempts
-- observation sources and detected entities
-- authority results and evidence
-- metric snapshots
-- diagnostics and diagnostic evidence
-- recommended actions
+Migration `migrations/001_initial_schema.sql` creates workspaces, target entities, competitors, versioned prompt sets, scoring/authority profiles, benchmark definitions, benchmark runs, logical observations, observation attempts, sources/entities, authority results/evidence, metric snapshots, diagnostics, and recommended actions.
 
 The database enforces one logical observation per `benchmark_run_id + prompt_id + platform_key`. Retry history belongs in `observation_attempts`; it does not create duplicate logical observations.
 
@@ -27,31 +12,74 @@ The database enforces one logical observation per `benchmark_run_id + prompt_id 
 
 `src/repository.ts` defines `PlatformRepository`, the persistence boundary consumed by the benchmark engine and web application.
 
-`src/postgres.ts` implements that interface with `pg` and PostgreSQL. Observation writes are transactional and replace child source/entity rows as one logical update. Authority writes are also transactional and versioned by classifier version.
+`src/postgres.ts` implements that interface with `pg` and PostgreSQL. Observation writes are transactional. Authority writes are transactional and versioned by classifier version.
 
-## Configuration
+## Isolated development PostgreSQL
 
-No database credentials are committed. Runtime configuration uses environment variables:
+Local development uses the repository-level `docker-compose.dev.yml` file.
 
-```bash
-DATABASE_URL=postgresql://user:password@host:5432/database
-DATABASE_SSL=true
-DATABASE_POOL_MAX=10
-```
+The development instance is intentionally isolated from other PostgreSQL installations:
 
-`DATABASE_SSL=false` is available for local PostgreSQL. Hosted PostgreSQL defaults to TLS with certificate verification disabled at this foundation stage; deployment-specific hardening should replace that setting before production use.
+- container: `ai-visibility-postgres-dev`
+- database: `ai_visibility_dev`
+- user: `ai_visibility`
+- host port: `55432`
+- container port: `5432`
+- persistent volume: `ai_visibility_postgres_dev_data`
+- SSL: disabled locally
 
-## Apply the migration
+The committed password is development-only and must never be reused for staging or production.
+
+### First-time startup
 
 From the repository root:
 
 ```bash
+cp .env.example .env
 npm install
-npm run migrate --workspace=@ai-visibility/database
+npm run db:up
 ```
 
-The migration is not connected to any CSI production system and does not access n8n or the CSI Google Sheet.
+Then load the development environment and validate the database:
 
-## Current status
+```bash
+set -a
+source .env
+set +a
+npm run db:healthcheck
+npm run db:migrate
+```
 
-Schema and repository code exist, but no production PostgreSQL instance has been provisioned or migrated yet. The next validation step is to run this package against an isolated development database and add integration tests for uniqueness, resume/upsert, authority versioning, and complete-run retrieval.
+The healthcheck should report database `ai_visibility_dev` and user `ai_visibility`.
+
+### Daily commands
+
+```bash
+npm run db:up
+npm run db:down
+npm run db:logs
+```
+
+### Destructive reset
+
+```bash
+npm run db:reset
+```
+
+`db:reset` deletes only the dedicated development Docker volume and recreates a clean local PostgreSQL instance. After reset, run `npm run db:migrate` again.
+
+## Environment
+
+`.env.example` contains the local template. `.env` is ignored by Git.
+
+```text
+DATABASE_URL=postgresql://ai_visibility:ai_visibility_dev_only@127.0.0.1:55432/ai_visibility_dev
+DATABASE_SSL=false
+DATABASE_POOL_MAX=10
+```
+
+Staging and production must use separate databases, separate credentials, and non-committed secrets.
+
+## Isolation guarantee
+
+This development database is unrelated to the CSI production environment. Starting, resetting, migrating, or deleting it does not touch CSI n8n workflows, the CSI Google Sheet, Apps Script, Netlify, or any other database.
