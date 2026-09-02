@@ -11,6 +11,7 @@
     "fake:execute": "tsx src/fake-execution-cli.ts",
     "fake:persist": "tsx src/fake-persist-cli.ts",
     "fake:retry": "tsx src/fake-retry-cli.ts",
+    "fake:attempt-history": "tsx src/fake-attempt-history-cli.ts",
     "run:reconcile": "tsx src/reconcile-run-cli.ts"
   },
   "dependencies": {
