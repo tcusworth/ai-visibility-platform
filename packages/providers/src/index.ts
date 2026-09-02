@@ -50,3 +50,5 @@ export class ProviderRegistry {
     return provider;
   }
 }
+
+export * from "./openai-scorer.js";
