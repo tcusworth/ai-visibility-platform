@@ -8,9 +8,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@ai-visibility/database": "0.1.0",
     "@ai-visibility/domain": "0.1.0"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "typescript": "^5.9.0"
   }
 }
