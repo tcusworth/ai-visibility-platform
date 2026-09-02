@@ -8,7 +8,8 @@
     "import:prompts": "tsx src/import-prompts.ts",
     "validate:methodology": "tsx src/validate-methodology.ts",
     "validate:snapshots": "tsx src/validate-snapshots.ts",
-    "validate:classification": "tsx src/validate-classification.ts"
+    "validate:classification": "tsx src/validate-classification.ts",
+    "validate:prompt": "tsx src/validate-prompt.ts"
   },
   "dependencies": {
     "@ai-visibility/domain": "0.1.0",
