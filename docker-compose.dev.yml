@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-visibility-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_visibility_dev
+      POSTGRES_USER: ai_visibility
+      POSTGRES_PASSWORD: ai_visibility_dev_only
+    ports:
+      - "55432:5432"
+    volumes:
+      - ai_visibility_postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_visibility -d ai_visibility_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+volumes:
+  ai_visibility_postgres_dev_data:
+    name: ai_visibility_postgres_dev_data
