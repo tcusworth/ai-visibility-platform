@@ -55,12 +55,19 @@ async function main(): Promise<void> {
     });
     const successAt = new Date().toISOString();
     const success: Observation = {
-      ...failed,
+      id: failed.id,
+      workspaceId: failed.workspaceId,
+      benchmarkRunId: failed.benchmarkRunId,
+      benchmarkRunKey: failed.benchmarkRunKey,
+      promptId: failed.promptId,
+      platform: failed.platform,
+      model: response.model,
       status: "SUCCESS",
       answer: response.answer,
-      errorCode: undefined,
-      errorMessage: undefined,
-      model: response.model,
+      sources: [],
+      entities: [],
+      scorerVersion: failed.scorerVersion,
+      createdAt: failed.createdAt,
       updatedAt: successAt,
     };
     await repository.upsertObservation(success);
