@@ -48,8 +48,8 @@ async function main(): Promise<void> {
       observationId,
       status: "FAILED",
       providerRequestId: `fake-failed:${String(item.platform.key)}`,
-      errorCode: failed.errorCode,
-      errorMessage: failed.errorMessage,
+      ...(failed.errorCode ? { errorCode: failed.errorCode } : {}),
+      ...(failed.errorMessage ? { errorMessage: failed.errorMessage } : {}),
       startedAt: failedAt,
       completedAt: failedAt,
     });
@@ -86,7 +86,7 @@ async function main(): Promise<void> {
     await attempts.append({
       observationId,
       status: "SUCCESS",
-      providerRequestId: response.rawProviderId,
+      ...(response.rawProviderId ? { providerRequestId: response.rawProviderId } : {}),
       startedAt: successStartedAt,
       completedAt: successCompletedAt,
     });
