@@ -7,11 +7,13 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "init:run": "tsx src/init-run-cli.ts",
-    "plan:run": "tsx src/plan-run-cli.ts"
+    "plan:run": "tsx src/plan-run-cli.ts",
+    "fake:execute": "tsx src/fake-execution-cli.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
-    "@ai-visibility/domain": "0.1.0"
+    "@ai-visibility/domain": "0.1.0",
+    "@ai-visibility/providers": "0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
