@@ -71,6 +71,25 @@ function extractGemini(payload: unknown): { answer: string; sources: SourceRefer
   return { answer, sources };
 }
 
+function extractErrorDetail(payload: unknown): string {
+  if (!payload || typeof payload !== "object") return "unknown Gemini API error";
+  const record = payload as Record<string, unknown>;
+  const errorValue = record.error;
+  if (errorValue && typeof errorValue === "object") {
+    const errorRecord = errorValue as Record<string, unknown>;
+    const parts = [
+      typeof errorRecord.status === "string" ? errorRecord.status : "",
+      typeof errorRecord.message === "string" ? errorRecord.message : "",
+    ].filter(Boolean);
+    if (parts.length > 0) return parts.join(": ");
+  }
+  try {
+    return JSON.stringify(payload).slice(0, 1000);
+  } catch {
+    return "unreadable Gemini API error payload";
+  }
+}
+
 export class GeminiInteractionsProvider implements ModelProvider {
   readonly platform = "gemini" as const;
   private readonly endpoint: string;
@@ -102,7 +121,9 @@ export class GeminiInteractionsProvider implements ModelProvider {
     );
 
     const payload = await response.json();
-    if (!response.ok) throw new Error(`Gemini provider request failed with HTTP ${response.status}.`);
+    if (!response.ok) {
+      throw new Error(`Gemini provider request failed with HTTP ${response.status}: ${extractErrorDetail(payload)}`);
+    }
 
     const extracted = extractGemini(payload);
     if (!extracted.answer) throw new Error("Gemini provider response did not contain answer text.");
