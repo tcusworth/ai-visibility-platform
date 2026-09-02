@@ -6,7 +6,8 @@
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "migrate": "tsx src/migrate.ts"
+    "migrate": "tsx src/migrate.ts",
+    "healthcheck": "tsx src/healthcheck.ts"
   },
   "dependencies": {
     "@ai-visibility/domain": "0.1.0",
