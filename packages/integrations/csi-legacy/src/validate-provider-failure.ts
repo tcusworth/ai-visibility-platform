@@ -31,10 +31,14 @@ class FailOnceProvider implements ModelProvider {
 }
 
 class CountingScorer implements ScorerClient {
-  calls = 0;
+  private callCount = 0;
+
+  get calls(): number {
+    return this.callCount;
+  }
 
   async score(): Promise<ScorerResponse> {
-    this.calls += 1;
+    this.callCount += 1;
     return {
       rawText: JSON.stringify({
         csi_mentioned: true,
@@ -158,14 +162,14 @@ async function main(): Promise<void> {
       assert(error.persistence.attempt.attemptNumber === 1, "Provider failure persisted as attempt 1");
     }
 
-    assert(scorer.calls === 0, "Scorer was not called after provider failure");
+    assert(Number(scorer.calls) === 0, "Scorer was not called after provider failure");
 
     const retry = await service.execute(input);
     assert(retry.scored.observation.status === "SUCCESS", "Provider retry completed as SUCCESS");
     assert(retry.scored.persistence.observationId === failedId, "Provider retry reused canonical FAILED row");
     assert(retry.scored.persistence.attempt.attemptNumber === 2, "Provider retry persisted as attempt 2");
     assert(provider.calls === 2, "Fake provider was called exactly twice");
-    assert(scorer.calls === 1, "Scorer was called only for successful provider response");
+    assert(Number(scorer.calls) === 1, "Scorer was called only for successful provider response");
 
     const observations = await pool.query(`SELECT id, status, error_code FROM observations WHERE benchmark_run_id=$1`, [runId]);
     assert(observations.rowCount === 1, "Exactly one canonical observation remains after retry");
