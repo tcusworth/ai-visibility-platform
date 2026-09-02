@@ -66,3 +66,5 @@ export function applyScoringResult(observation: Observation, result: ScoringResu
     updatedAt,
   };
 }
+
+export * from "./methodology.js";
