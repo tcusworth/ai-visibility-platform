@@ -36,7 +36,7 @@ const scorerPromptProfile: VisibilityScorerPromptProfile = {
   mentionedField: "csi_mentioned",
   citedField: "csi_cited",
   positioningField: "csi_positioning",
-  ownedSourceExample: "csi-automation.com",
+  controlledSourceExample: "csi-automation.com",
   allowedEntityTypes: [
     "Integrator / Consultant",
     "Automation Vendor",
