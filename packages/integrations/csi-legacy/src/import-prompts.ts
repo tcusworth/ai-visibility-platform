@@ -88,20 +88,30 @@ async function main(): Promise<void> {
   const parsed = parseCsv(csvText);
   if (parsed.length < 2) throw new Error('CSV contains no prompt rows.');
 
-  const headers = parsed[0].map(normalizeHeader);
-  const required = ['prompt_id', 'prompt', 'category', 'intent', 'weight', 'active'];
+  const headerRow = parsed[0];
+  if (!headerRow) throw new Error('CSV header row is missing.');
+
+  const headers = headerRow.map(normalizeHeader);
+  const required = ['prompt_id', 'prompt', 'category', 'intent', 'weight', 'active'] as const;
+  const index = new Map(headers.map((header, i) => [header, i]));
+
   for (const column of required) {
-    if (!headers.includes(column)) throw new Error(`CSV is missing required column: ${column}`);
+    if (!index.has(column)) throw new Error(`CSV is missing required column: ${column}`);
   }
 
-  const index = Object.fromEntries(headers.map((header, i) => [header, i])) as Record<string, number>;
+  function valueFor(values: string[], column: (typeof required)[number]): string {
+    const position = index.get(column);
+    if (position === undefined) throw new Error(`CSV is missing required column: ${column}`);
+    return values[position] ?? '';
+  }
+
   const rows: CsvRow[] = parsed.slice(1).map((values) => ({
-    prompt_id: values[index.prompt_id] ?? '',
-    prompt: values[index.prompt] ?? '',
-    category: values[index.category] ?? '',
-    intent: values[index.intent] ?? '',
-    weight: values[index.weight] ?? '',
-    active: values[index.active] ?? '',
+    prompt_id: valueFor(values, 'prompt_id'),
+    prompt: valueFor(values, 'prompt'),
+    category: valueFor(values, 'category'),
+    intent: valueFor(values, 'intent'),
+    weight: valueFor(values, 'weight'),
+    active: valueFor(values, 'active'),
   }));
 
   if (rows.length !== expectedCount) {
@@ -142,7 +152,9 @@ async function main(): Promise<void> {
       throw new Error(`Expected exactly one prompt set for ${workspaceSlug} / ${promptSetName} / ${promptSetVersion}; found ${promptSetResult.rowCount ?? 0}.`);
     }
 
-    const promptSetId = promptSetResult.rows[0].id;
+    const promptSetRow = promptSetResult.rows[0];
+    if (!promptSetRow) throw new Error('Prompt set query returned no row after validation.');
+    const promptSetId = promptSetRow.id;
 
     await client.query('BEGIN');
 
@@ -180,7 +192,9 @@ async function main(): Promise<void> {
       'SELECT COUNT(*)::text AS count FROM prompts WHERE prompt_set_version_id = $1',
       [promptSetId],
     );
-    const finalCount = Number(countResult.rows[0].count);
+    const countRow = countResult.rows[0];
+    if (!countRow) throw new Error('Prompt count query returned no row.');
+    const finalCount = Number(countRow.count);
 
     if (finalCount !== expectedCount) {
       throw new Error(`Post-import validation expected ${expectedCount} prompts but found ${finalCount}. Transaction rolled back.`);
