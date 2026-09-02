@@ -17,6 +17,7 @@ export interface BenchmarkObservationExecutionInput {
   target: TargetEntity;
   platform: PlatformKey;
   providerModel: string;
+  providerPrompt?: string;
   sources?: SourceReference[];
   scorerPromptProfile: VisibilityScorerPromptProfile;
   recommendationThreshold?: number;
@@ -38,6 +39,21 @@ export class ProviderExecutionFailureError extends Error {
     super(message, options);
     this.name = "ProviderExecutionFailureError";
   }
+}
+
+function normalizeDomain(value: string): string {
+  return value.trim().toLowerCase().replace(/^www\./, "").replace(/:\d+$/, "");
+}
+
+function markSourceOwnership(sources: SourceReference[], target: TargetEntity): SourceReference[] {
+  const ownedDomains = target.ownedDomains.map(normalizeDomain);
+  return sources.map((source) => {
+    const domain = normalizeDomain(source.domain);
+    const ownedByTarget = ownedDomains.some(
+      (owned) => domain === owned || domain.endsWith(`.${owned}`),
+    );
+    return { ...source, ownedByTarget };
+  });
 }
 
 export class BenchmarkObservationExecutionService {
@@ -64,7 +80,7 @@ export class BenchmarkObservationExecutionService {
       providerResponse = await this.provider.generate({
         platform: input.platform,
         model: input.providerModel,
-        prompt: input.prompt.text,
+        prompt: input.providerPrompt ?? input.prompt.text,
       });
     } catch (error) {
       const completedAt = new Date().toISOString();
@@ -104,6 +120,11 @@ export class BenchmarkObservationExecutionService {
       );
     }
 
+    const providerSources = markSourceOwnership(
+      providerResponse.sources ?? input.sources ?? [],
+      input.target,
+    );
+
     const scored = await this.scoredExecution.execute({
       workspaceId: input.workspaceId,
       benchmarkRunId: input.benchmarkRunId,
@@ -114,7 +135,7 @@ export class BenchmarkObservationExecutionService {
       providerModel: providerResponse.model,
       providerAnswer: providerResponse.answer,
       ...(providerResponse.rawProviderId ? { providerRequestId: providerResponse.rawProviderId } : {}),
-      sources: providerResponse.sources ?? input.sources ?? [],
+      sources: providerSources,
       scorerPromptProfile: input.scorerPromptProfile,
       ...(input.recommendationThreshold !== undefined
         ? { recommendationThreshold: input.recommendationThreshold }
