@@ -1,6 +1,6 @@
 import type { PlatformRepository } from "@ai-visibility/database";
 import type { BenchmarkRun, Observation, PlatformDefinition, PromptDefinition } from "@ai-visibility/domain";
-import { planPendingObservations, type PlannedObservation } from "./index.js";
+import { planPendingObservations, type PlannedObservation } from "./planning.js";
 
 export interface ExecutionPlan {
   run: BenchmarkRun;
