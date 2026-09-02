@@ -5,7 +5,8 @@
   "type": "module",
   "exports": "./src/index.ts",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "init:run": "tsx src/init-run-cli.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
@@ -13,6 +14,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.0"
   }
 }
