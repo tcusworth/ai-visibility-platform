@@ -19,7 +19,8 @@
     "validate:live-openai-provider": "tsx src/validate-live-openai-provider.ts",
     "validate:live-openai-pipeline": "tsx src/validate-live-openai-pipeline.ts",
     "validate:live-gemini-provider": "tsx src/validate-live-gemini-provider.ts",
-    "validate:live-gemini-pipeline": "tsx src/validate-live-gemini-pipeline.ts"
+    "validate:live-gemini-pipeline": "tsx src/validate-live-gemini-pipeline.ts",
+    "validate:live-perplexity-provider": "tsx src/validate-live-perplexity-provider.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
