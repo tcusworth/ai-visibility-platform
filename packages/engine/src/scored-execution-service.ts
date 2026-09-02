@@ -38,6 +38,18 @@ export interface ScoredExecutionResult {
   notes: string;
 }
 
+export class ScoredExecutionFailureError extends Error {
+  constructor(
+    message: string,
+    readonly observation: Observation,
+    readonly persistence: PersistObservationExecutionResult,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "ScoredExecutionFailureError";
+  }
+}
+
 function normalizeName(value: string): string {
   return value.trim().toLowerCase();
 }
@@ -78,7 +90,48 @@ export class ScoredObservationExecutionService {
       sourceDomains,
     });
 
-    const scorerResponse = await this.scorer.score({ prompt: scorerPrompt });
+    let scorerResponse;
+    try {
+      scorerResponse = await this.scorer.score({ prompt: scorerPrompt });
+    } catch (error) {
+      const now = input.completedAt ?? new Date().toISOString();
+      const message = error instanceof Error ? error.message : String(error);
+      const observation: Observation = {
+        id: randomUUID(),
+        workspaceId: input.workspaceId,
+        benchmarkRunId: input.benchmarkRunId,
+        benchmarkRunKey: input.benchmarkRunKey,
+        promptId: input.prompt.id,
+        platform: input.platform,
+        model: input.providerModel,
+        status: "FAILED",
+        errorCode: "SCORER_FAILURE",
+        errorMessage: message,
+        sources: input.sources,
+        entities: [],
+        scorerVersion: "scorer-failed",
+        createdAt: now,
+        updatedAt: now,
+      };
+      const persistence = await this.persistence.persist({
+        observation,
+        attempt: {
+          status: "FAILED",
+          ...(input.providerRequestId ? { providerRequestId: input.providerRequestId } : {}),
+          errorCode: "SCORER_FAILURE",
+          errorMessage: message,
+          ...(input.startedAt ? { startedAt: input.startedAt } : {}),
+          completedAt: now,
+        },
+      });
+      throw new ScoredExecutionFailureError(
+        `Scorer failed and the retryable FAILED observation was persisted: ${message}`,
+        { ...observation, id: persistence.observationId },
+        persistence,
+        { cause: error },
+      );
+    }
+
     const scorerVersion = `${scorerResponse.model}:execution`;
     const normalized = normalizeScorerClassification({
       rawText: scorerResponse.rawText,
