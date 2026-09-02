@@ -114,7 +114,7 @@ export class BenchmarkObservationExecutionService {
       providerModel: providerResponse.model,
       providerAnswer: providerResponse.answer,
       ...(providerResponse.rawProviderId ? { providerRequestId: providerResponse.rawProviderId } : {}),
-      sources: input.sources ?? [],
+      sources: providerResponse.sources ?? input.sources ?? [],
       scorerPromptProfile: input.scorerPromptProfile,
       ...(input.recommendationThreshold !== undefined
         ? { recommendationThreshold: input.recommendationThreshold }
