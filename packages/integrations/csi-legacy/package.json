@@ -9,7 +9,8 @@
     "validate:methodology": "tsx src/validate-methodology.ts",
     "validate:snapshots": "tsx src/validate-snapshots.ts",
     "validate:classification": "tsx src/validate-classification.ts",
-    "validate:prompt": "tsx src/validate-prompt.ts"
+    "validate:prompt": "tsx src/validate-prompt.ts",
+    "validate:pipeline": "tsx src/validate-pipeline.ts"
   },
   "dependencies": {
     "@ai-visibility/domain": "0.1.0",
