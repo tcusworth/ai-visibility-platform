@@ -3,3 +3,4 @@ export * from "./run-initializer.js";
 export * from "./execution-planner.js";
 export * from "./run-lifecycle.js";
 export * from "./scored-execution-service.js";
+export * from "./benchmark-observation-execution-service.js";
