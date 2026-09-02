@@ -22,7 +22,8 @@
     "validate:live-gemini-pipeline": "tsx src/validate-live-gemini-pipeline.ts",
     "validate:live-perplexity-provider": "tsx src/validate-live-perplexity-provider.ts",
     "validate:live-perplexity-pipeline": "tsx src/validate-live-perplexity-pipeline.ts",
-    "validate:live-claude-provider": "tsx src/validate-live-claude-provider.ts"
+    "validate:live-claude-provider": "tsx src/validate-live-claude-provider.ts",
+    "validate:live-claude-pipeline": "tsx src/validate-live-claude-pipeline.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
