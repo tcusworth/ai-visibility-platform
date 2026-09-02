@@ -16,7 +16,8 @@
     "validate:scored-execution": "tsx src/validate-scored-execution.ts",
     "validate:scored-execution-failure": "tsx src/validate-scored-execution-failure.ts",
     "validate:provider-failure": "tsx src/validate-provider-failure.ts",
-    "validate:live-openai-provider": "tsx src/validate-live-openai-provider.ts"
+    "validate:live-openai-provider": "tsx src/validate-live-openai-provider.ts",
+    "validate:live-openai-pipeline": "tsx src/validate-live-openai-pipeline.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
