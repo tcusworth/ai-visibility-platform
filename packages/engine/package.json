@@ -10,7 +10,8 @@
     "plan:run": "tsx src/plan-run-cli.ts",
     "fake:execute": "tsx src/fake-execution-cli.ts",
     "fake:persist": "tsx src/fake-persist-cli.ts",
-    "fake:retry": "tsx src/fake-retry-cli.ts"
+    "fake:retry": "tsx src/fake-retry-cli.ts",
+    "run:reconcile": "tsx src/reconcile-run-cli.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
