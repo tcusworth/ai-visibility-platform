@@ -26,7 +26,8 @@
     "validate:live-perplexity-pipeline": "tsx src/validate-live-perplexity-pipeline.ts",
     "validate:live-claude-provider": "tsx src/validate-live-claude-provider.ts",
     "validate:live-claude-pipeline": "tsx src/validate-live-claude-pipeline.ts",
-    "validate:live-four-provider-shadow": "tsx src/validate-live-four-provider-shadow.ts"
+    "validate:live-four-provider-shadow": "tsx src/validate-live-four-provider-shadow.ts",
+    "run:shadow5": "tsx src/run-live-shadow5.ts"
   },
   "dependencies": {
     "@ai-visibility/database": "0.1.0",
