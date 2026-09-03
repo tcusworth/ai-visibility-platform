@@ -18,6 +18,7 @@
     "validate:provider-failure": "tsx src/validate-provider-failure.ts",
     "validate:provider-registry": "tsx src/validate-provider-registry.ts",
     "validate:offline-finalization": "tsx src/validate-offline-finalization.ts",
+    "validate:shadow5-readiness": "tsx src/validate-shadow5-readiness.ts",
     "validate:live-openai-provider": "tsx src/validate-live-openai-provider.ts",
     "validate:live-openai-pipeline": "tsx src/validate-live-openai-pipeline.ts",
     "validate:live-gemini-provider": "tsx src/validate-live-gemini-provider.ts",
