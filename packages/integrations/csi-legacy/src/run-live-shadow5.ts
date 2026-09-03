@@ -1,13 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
-import { PostgresObservationExecutionStore } from "@ai-visibility/database";
+import {
+  PostgresObservationExecutionStore,
+  PostgresPlatformRepository,
+} from "@ai-visibility/database";
 import { BenchmarkObservationExecutionService } from "@ai-visibility/engine";
 import {
   OpenAIResponsesScorerClient,
   type HttpJsonClient,
   type HttpJsonResponse,
 } from "@ai-visibility/providers";
-import type { Observation, PlatformKey, PromptDefinition, TargetEntity } from "@ai-visibility/domain";
+import type { PromptDefinition, TargetEntity } from "@ai-visibility/domain";
 import {
   buildRunMetricSnapshot,
   type VisibilityMethodologyProfile,
@@ -131,6 +134,9 @@ async function main(): Promise<void> {
   if (!/^\d{4}-\d{2}-\d{2}-shadow5-v1$/.test(runKey)) {
     throw new Error("SHADOW5_RUN_KEY must use YYYY-MM-DD-shadow5-v1.");
   }
+  if (runKey === "2026-09-02-shadow-v1") {
+    throw new Error("Refusing to use the existing 2026-09-02-shadow-v1 run key.");
+  }
 
   const connectionString = requireEnv("DATABASE_URL");
   requireLocalDb(connectionString);
@@ -144,6 +150,7 @@ async function main(): Promise<void> {
   const scorerModel = process.env.SCORER_MODEL?.trim() || "gpt-5.4-nano";
 
   const pool = new Pool({ connectionString, ssl: false, max: 4 });
+  const repository = new PostgresPlatformRepository(pool);
   const httpClient = new CappedHttpClient();
 
   try {
@@ -173,13 +180,14 @@ async function main(): Promise<void> {
     const promptResult = await pool.query(
       `SELECT id, external_prompt_id, prompt_text, category, intent, weight, active
        FROM prompts
-       WHERE prompt_set_version_id=$1 AND active=true
-       ORDER BY external_prompt_id
-       LIMIT $2`,
-      [def.prompt_set_version_id, MAX_PROMPTS],
+       WHERE prompt_set_version_id=$1
+         AND active=true
+         AND external_prompt_id IN ('1','2','3','4','5')
+       ORDER BY external_prompt_id::int`,
+      [def.prompt_set_version_id],
     );
     if (promptResult.rowCount !== MAX_PROMPTS) {
-      throw new Error(`Expected ${MAX_PROMPTS} active prompts, found ${promptResult.rowCount ?? 0}.`);
+      throw new Error(`Expected prompts 1-5, found ${promptResult.rowCount ?? 0}.`);
     }
 
     const prompts: PromptDefinition[] = promptResult.rows.map((row) => ({
@@ -193,7 +201,7 @@ async function main(): Promise<void> {
     }));
 
     const existingRun = await pool.query(
-      `SELECT id, expected_prompt_count, expected_platform_count, expected_observation_count
+      `SELECT id, benchmark_definition_id, expected_prompt_count, expected_platform_count, expected_observation_count
        FROM benchmark_runs WHERE workspace_id=$1 AND benchmark_run_key=$2 LIMIT 1`,
       [workspaceId, runKey],
     );
@@ -201,6 +209,9 @@ async function main(): Promise<void> {
     let runId: string;
     if ((existingRun.rowCount ?? 0) > 0) {
       const row = existingRun.rows[0];
+      if (String(row.benchmark_definition_id) !== def.id) {
+        throw new Error("Existing Shadow5 run uses a different benchmark definition.");
+      }
       if (Number(row.expected_prompt_count) !== MAX_PROMPTS ||
           Number(row.expected_platform_count) !== platforms.length ||
           Number(row.expected_observation_count) !== MAX_OBSERVATIONS) {
@@ -214,8 +225,8 @@ async function main(): Promise<void> {
         `INSERT INTO benchmark_runs (
           id, workspace_id, benchmark_definition_id, benchmark_run_key, run_date, status,
           expected_prompt_count, expected_platform_count, expected_observation_count,
-          successful_observation_count, failed_observation_count, comparison_eligible, methodology_version
-         ) VALUES ($1,$2,$3,$4,$5,'running',$6,$7,$8,0,0,false,'csi-production-v1-shadow5')`,
+          successful_observation_count, failed_observation_count, comparison_eligible, methodology_version, started_at
+         ) VALUES ($1,$2,$3,$4,$5,'running',$6,$7,$8,0,0,false,'csi-production-v1-shadow5',now())`,
         [
           runId,
           workspaceId,
@@ -266,7 +277,6 @@ async function main(): Promise<void> {
       const providerPrompt = item.platform === "perplexity"
         ? item.prompt.text
         : benchmarkContext(item.prompt.text);
-      const model = CSI_PROVIDER_MODELS[item.platform];
 
       console.log(`Executing prompt ${item.prompt.externalPromptId} on ${item.platform}...`);
       const result = await service.execute({
@@ -276,13 +286,15 @@ async function main(): Promise<void> {
         prompt: item.prompt,
         target,
         platform: item.platform,
-        providerModel: model,
+        providerModel: CSI_PROVIDER_MODELS[item.platform],
         providerPrompt,
         scorerPromptProfile: scoreProfile,
         recommendationThreshold: 4,
       });
       console.log(
-        `  SUCCESS score=${result.scored.observation.visibilityScore}; mentioned=${result.scored.observation.targetMentioned}; cited=${result.scored.observation.targetCited}; recommended=${result.scored.observation.targetRecommended}; sources=${result.scored.observation.sources.length}`,
+        `  SUCCESS score=${result.scored.observation.visibilityScore}; mentioned=${result.scored.observation.targetMentioned}; ` +
+        `cited=${result.scored.observation.targetCited}; recommended=${result.scored.observation.targetRecommended}; ` +
+        `sources=${result.scored.observation.sources.length}; attempt=${result.scored.persistence.attempt.attemptNumber}`,
       );
     }
 
@@ -290,92 +302,30 @@ async function main(): Promise<void> {
       throw new Error(`Expected ${pending.length * 2} HTTP requests for this invocation, observed ${httpClient.calls}.`);
     }
 
-    const finalRows = await pool.query(
-      `SELECT id, workspace_id, benchmark_run_id, benchmark_run_key, prompt_id, platform_key, model, status,
-              target_mentioned, target_cited, target_recommended, visibility_score, weighted_score,
-              scorer_version, error_code, error_message, created_at, updated_at
-       FROM observations WHERE benchmark_run_id=$1 ORDER BY prompt_id, platform_key`,
-      [runId],
-    );
-
-    const successCount = finalRows.rows.filter((row) => row.status === "SUCCESS").length;
-    const failedCount = finalRows.rows.filter((row) => row.status === "FAILED").length;
-    const logicalKeys = new Set(finalRows.rows.map((row) => `${String(row.prompt_id)}|${String(row.platform_key)}`));
+    const observations = await repository.listObservations(runId);
+    const successCount = observations.filter((observation) => observation.status === "SUCCESS").length;
+    const failedCount = observations.filter((observation) => observation.status === "FAILED").length;
+    const logicalKeys = new Set(observations.map((observation) => `${observation.promptId}|${observation.platform}`));
+    const complete = observations.length === MAX_OBSERVATIONS &&
+      logicalKeys.size === MAX_OBSERVATIONS &&
+      successCount === MAX_OBSERVATIONS &&
+      failedCount === 0;
 
     await pool.query(
       `UPDATE benchmark_runs
-       SET successful_observation_count=$2, failed_observation_count=$3, status=$4
+       SET successful_observation_count=$2, failed_observation_count=$3, status=$4, comparison_eligible=false, updated_at=now()
        WHERE id=$1`,
-      [runId, successCount, failedCount, successCount === MAX_OBSERVATIONS && failedCount === 0 ? "finalizing" : "running"],
+      [runId, successCount, failedCount, complete ? "finalizing" : "running"],
     );
 
-    console.log(`Canonical observations persisted: ${finalRows.rowCount ?? 0}`);
+    console.log(`Canonical observations persisted: ${observations.length}`);
     console.log(`Logical observation keys: ${logicalKeys.size}`);
     console.log(`SUCCESS: ${successCount}`);
     console.log(`FAILED: ${failedCount}`);
 
-    if ((finalRows.rowCount ?? 0) !== MAX_OBSERVATIONS || logicalKeys.size !== MAX_OBSERVATIONS) {
-      throw new Error("Shadow5 does not yet contain exactly 20 unique canonical observations.");
+    if (!complete) {
+      throw new Error("Shadow5 is not complete; leave the persistent run in place for diagnosis and resume.");
     }
-    if (successCount !== MAX_OBSERVATIONS || failedCount !== 0) {
-      throw new Error("Shadow5 is not complete; leave the persistent run in place for diagnosis/resume.");
-    }
-
-    const sourceRows = await pool.query(
-      `SELECT observation_id, url, domain, owned_by_target FROM observation_sources
-       WHERE observation_id IN (SELECT id FROM observations WHERE benchmark_run_id=$1)
-       ORDER BY observation_id, id`,
-      [runId],
-    );
-    const entityRows = await pool.query(
-      `SELECT observation_id, entity_name, entity_type FROM observation_entities
-       WHERE observation_id IN (SELECT id FROM observations WHERE benchmark_run_id=$1)
-       ORDER BY observation_id, id`,
-      [runId],
-    );
-
-    const sourcesByObservation = new Map<string, Observation["sources"]>();
-    for (const row of sourceRows.rows) {
-      const observationId = String(row.observation_id);
-      const list = sourcesByObservation.get(observationId) ?? [];
-      list.push({
-        url: String(row.url),
-        domain: String(row.domain),
-        ownedByTarget: Boolean(row.owned_by_target),
-      });
-      sourcesByObservation.set(observationId, list);
-    }
-
-    const entitiesByObservation = new Map<string, Observation["entities"]>();
-    for (const row of entityRows.rows) {
-      const observationId = String(row.observation_id);
-      const list = entitiesByObservation.get(observationId) ?? [];
-      list.push({ name: String(row.entity_name), type: String(row.entity_type) });
-      entitiesByObservation.set(observationId, list);
-    }
-
-    const observations: Observation[] = finalRows.rows.map((row) => ({
-      id: String(row.id),
-      workspaceId: String(row.workspace_id),
-      benchmarkRunId: String(row.benchmark_run_id),
-      benchmarkRunKey: String(row.benchmark_run_key),
-      promptId: String(row.prompt_id),
-      platform: String(row.platform_key) as PlatformKey,
-      model: String(row.model),
-      status: row.status as "SUCCESS" | "FAILED",
-      sources: sourcesByObservation.get(String(row.id)) ?? [],
-      entities: entitiesByObservation.get(String(row.id)) ?? [],
-      ...(row.target_mentioned !== null ? { targetMentioned: Boolean(row.target_mentioned) } : {}),
-      ...(row.target_cited !== null ? { targetCited: Boolean(row.target_cited) } : {}),
-      ...(row.target_recommended !== null ? { targetRecommended: Boolean(row.target_recommended) } : {}),
-      ...(row.visibility_score !== null ? { visibilityScore: Number(row.visibility_score) } : {}),
-      ...(row.weighted_score !== null ? { weightedScore: Number(row.weighted_score) } : {}),
-      scorerVersion: String(row.scorer_version),
-      ...(row.error_code !== null ? { errorCode: String(row.error_code) } : {}),
-      ...(row.error_message !== null ? { errorMessage: String(row.error_message) } : {}),
-      createdAt: new Date(row.created_at).toISOString(),
-      updatedAt: new Date(row.updated_at).toISOString(),
-    }));
 
     const snapshot = buildRunMetricSnapshot({
       observations,
