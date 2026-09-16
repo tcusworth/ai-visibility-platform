@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Read-only CSI AI Visibility benchmark control room">
+  <title>CSI Visibility Operator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">AI</div><div><div class="brand-title">Visibility Operator</div><div class="brand-sub">Read-only CSI control room</div></div></div>
+      <div class="side-label">Runs</div><div id="run-list"></div>
+      <div class="side-label">Pages</div>
+      <nav>
+        <button class="nav-link active" data-page="overview">Overview</button>
+        <button class="nav-link" data-page="prompt-sets">Prompt Sets</button>
+        <button class="nav-link" data-page="readiness">Readiness</button>
+        <button class="nav-link" data-page="operations">Operations</button>
+        <button class="nav-link" data-page="compare">Compare</button>
+        <button class="nav-link" data-page="evidence">Evidence</button>
+        <button class="nav-link" data-page="reports">Reports</button>
+      </nav>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div><div class="eyebrow">CSI development workspace</div><h1 id="page-title">Overview</h1></div><div class="top-actions"><span class="pill">Read-only</span><button class="btn" id="refresh">Refresh</button><span id="updated"></span></div></header>
+      <div id="content"></div>
+    </main>
+  </div>
+  <script src="data.js"></script><script src="app.js"></script>
+</body>
+</html>

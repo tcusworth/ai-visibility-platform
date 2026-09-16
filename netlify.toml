@@ -1,0 +1,15 @@
+[build]
+  publish = "apps/web"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/reports/*"
+  [headers.values]
+    Content-Disposition = "attachment"
